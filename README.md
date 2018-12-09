@@ -8,7 +8,6 @@ TODO
 ```
 COMP10771:go-search alexandra.grant$ ./go-search
 Constructing index on 8 files...
-executor.go:138:14
 Building prefix tree...
 Initializing search
 Please use `exit` or `Ctrl-D` to exit this program.
