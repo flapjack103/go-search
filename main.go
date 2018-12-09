@@ -5,13 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/c-bata/go-prompt"
-	"github.com/c-bata/go-prompt/completer"
 )
-
-// TODO: define a proper Completer for user input
-var noopCompleter = prompt.Completer(func(arg1 prompt.Document) []prompt.Suggest { return []prompt.Suggest{} })
 
 func main() {
 	// default to current directory but if a directory is given use that one
@@ -21,6 +15,28 @@ func main() {
 		root = os.Args[1]
 	}
 
+	fmt.Println("Building index...")
+	idx := BuildIndex(getFiles(root))
+	cs := idx.Functions().BuildCallStack()
+	if err := cs.Write("static/tree.json"); err != nil {
+		fmt.Printf("Error creating callstack json: %s\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Building prefix tree...")
+	trie := TrieFromIndex(idx)
+
+	fmt.Println("Initializing search...")
+	q := NewQuerier(idx, trie)
+
+	s := NewServer(q)
+	if err := s.Listen(); err != nil {
+		fmt.Printf("Could not start server: %s\n", err)
+		os.Exit(1)
+	}
+}
+
+func getFiles(root string) []string {
 	var files []string
 	filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -33,26 +49,5 @@ func main() {
 		return nil
 	})
 
-	fmt.Printf("Constructing index on %d files...\n", len(files))
-	idx := buildIndex(files)
-
-	fmt.Println("Building prefix tree...")
-	trie := TrieFromIndex(idx)
-
-	fmt.Println("Initializing search")
-	q := NewQuerier(idx, trie)
-	exec := NewExecutor(q)
-
-	fmt.Println("Please use `exit` or `Ctrl-D` to exit this program.")
-	defer fmt.Println("Bye!")
-
-	p := prompt.New(
-		exec.Run,
-		noopCompleter,
-		prompt.OptionTitle("go-search: interactive go program search client"),
-		prompt.OptionPrefix(">>> "),
-		prompt.OptionInputTextColor(prompt.Yellow),
-		prompt.OptionCompletionWordSeparator(completer.FilePathCompletionSeparator),
-	)
-	p.Run()
+	return files
 }

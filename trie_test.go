@@ -19,9 +19,12 @@ func TestTrieBuild(t *testing.T) {
 		"set",
 	}
 
-	idx := newIndex(nil)
+	idx := &Index{
+		references: make(map[string][]Reference),
+		functions:  make(map[string][]*Function),
+	}
 	for _, w := range words {
-		idx.wordMap[w] = nil
+		idx.references[w] = nil
 	}
 
 	tri := TrieFromIndex(idx)
@@ -52,9 +55,12 @@ func TestTrieFind(t *testing.T) {
 		"set",
 	}
 
-	idx := newIndex(nil)
+	idx := &Index{
+		references: make(map[string][]Reference),
+		functions:  make(map[string][]*Function),
+	}
 	for _, w := range words {
-		idx.wordMap[w] = nil
+		idx.references[w] = nil
 	}
 
 	tri := TrieFromIndex(idx)

@@ -19,7 +19,7 @@ func NewTrie() *Trie {
 // TrieFromIndex builds a prefix tree from the given index
 func TrieFromIndex(idx *Index) *Trie {
 	t := NewTrie()
-	for word := range idx.wordMap {
+	for word := range idx.references {
 		t.Insert(word)
 	}
 	return t

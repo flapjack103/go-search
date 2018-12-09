@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>Dashboard Template for Bootstrap</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <!-- Custom styles for this template -->
+    <link href="dashboard.css" rel="stylesheet">
+    </head>
+  <body>
+    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Go Search!</a>
+      <input id="search-bar" class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search">
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+          <div class="sidebar-sticky">
+            <ul class="nav flex-column">
+              <li id="sel-summary" class="nav-item">
+                <a class="nav-link active" href="#">
+                  <span data-feather="home"></span>
+                  Summary <span class="sr-only">(current)</span>
+                </a>
+              </li>
+              <li id="sel-call-tree" class="nav-item">
+                <a class="nav-link" href="#">
+                  <span data-feather="file"></span>
+                  Call Tree
+                </a>
+              </li>
+              <li id="sel-variables" class="nav-item">
+                <a class="nav-link" href="#">
+                  <span data-feather="file"></span>
+                  Variables
+                </a>
+              </li>
+              <li id="sel-functions" class="nav-item">
+                <a class="nav-link" href="#">
+                  <span data-feather="shopping-cart"></span>
+                  Functions
+                </a>
+              </li>
+              <li id="sel-files" class="nav-item">
+                <a class="nav-link" href="#">
+                  <span data-feather="users"></span>
+                  Files
+                </a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+          <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">Dashboard</h1>
+          </div>
+
+          <div id="myChart" class="my-4 w-100" width="900" height="380">
+          </div>
+
+          <h2 id="table-header">Results</h2>
+          <div class="table-responsive">
+            <table id="results-table" class="table table-striped table-sm">
+              <tr>
+                <th>Word</th>
+                <th>Type</th>
+                <th>Location</th>
+                <th>Is Declaration</th>
+                <th>Scope</th>
+              </tr>
+              <tbody id="results-table-body">
+                <tr>
+                  <td>Type a query in the search bar to search</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="tree.js"></script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+    <script>
+      feather.replace()
+    </script>
+
+    <!-- Graphs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
+    <script>
+
+    $( document ).ready(function() {
+        console.log( "ready!" );
+        var functionCallChart = new treeChart(d3);
+        functionCallChart.drawChart();
+    });
+
+    $("#search-bar").on('input', function() {
+      var query = $("#search-bar").val();
+      var url = '/search?query=' + query;
+      jQuery.get(url).done(function( data ) {
+        console.log(data);
+        if (data == null) {
+          return
+        }
+        data = jQuery.parseJSON(data);
+        var tbl_body = "";
+        var odd_even = false;
+        $.each(data, function() {
+            var tbl_row = "";
+            $.each(this, function(k , v) {
+                tbl_row += "<td>"+v+"</td>";
+            })
+            tbl_body += "<tr class=\""+( odd_even ? "odd" : "even")+"\">"+tbl_row+"</tr>";
+            odd_even = !odd_even;
+        })
+        $("#results-table-body").html(tbl_body);
+      });
+    });
+
+    $( "#sel-functions" ).click(function() {
+      console.log( "functions handler clicked" );
+      jQuery.get('/functions.json').done(function( data ) {
+        console.log(data);
+      });
+    });
+
+    $( "#sel-variables" ).click(function() {
+      console.log( "variables handler clicked" );
+    });
+
+    $( "#sel-files" ).click(function() {
+      console.log( "files handler clicked" );
+    });
+
+    $( "#sel-graph" ).click(function() {
+      console.log( "graph handler clicked" );
+    });
+
+    </script>
+  </body>
+</html>
