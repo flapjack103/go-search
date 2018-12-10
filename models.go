@@ -207,7 +207,6 @@ func (r References) Format() []*Result {
 			if d.Within != "" {
 				res.WithinFn = d.Within
 			}
-			results = append(results, res)
 		case *Struct:
 			res = &Result{
 				Word:      d.Name,
@@ -216,7 +215,6 @@ func (r References) Format() []*Result {
 				IsDecl:    "yes",
 				WithinFn:  "global",
 			}
-			results = append(results, res)
 		default:
 			fmt.Printf("Unknown Reference type %v\n", d)
 		}

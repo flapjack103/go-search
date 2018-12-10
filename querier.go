@@ -1,6 +1,8 @@
 package main
 
-import "sort"
+import (
+	"sort"
+)
 
 const (
 	// Filter types for query results
