@@ -218,13 +218,29 @@
             </div>
             <div class="bs-callout bs-callout-warning">
               <h4>Search</h4>
-                The search bar is another way of interacting with the code base.
+                The search bar is another way of interacting with the code base. It allows you to quickly locate functions and variables within the code and implements a smarter ranking algorithm to prioritize results based on relevance. Here we can define relevance as what would be considered most interesting to a software engineer looking through the code.
+                Because of this, the ranking algorithm favors functions and declarations. It also favors results that are referenced more than others within the code. All things being equal, it will fall back to lexicographically sorting the results.
+                <br>
+                <br>
+                Search also provides code previews for results. By clicking on a search result you can get context for what code is around the reference.
+                <br>
+                Filtering provides a way to search only within a particular file or only for a specific type of reference such as a function or variable.
             </div>
 
             <h4> The Code </h4>
             <p class="lead">
-              Unsurprisingly, Go Search! is written in Go. The default code project for this program is the project itself so you can see how the program which powers this tool is structured.
+              Unsurprisingly, Go Search! is written in Go. So we can use the tool itself to analyze the code powering this application.
             </p>
+            <div class="lead">
+              The main functions behind this code are:
+              <ul>
+                <li> <code>func main()</code> - Program execution begins here. All data structures are built and the web server is started</li>
+                <li> <code>func BuildIndex(fm *FileManager) *Index</code> - Indexes all the project files and creates the lookup table for fast search</li>
+                <li> <code>func TrieFromIndex(idx *Index) *Trie</code> - Builds the prefix tree from all the words in the Index</li>
+                <li> <code>func (f Functions) BuildCallStack() *CallStackRoot</code> - Builds the function callstack from all function-type words in the Index</li>
+                <li> <code>func (q *Querier) Query(input string, opts *QueryOptions) References </code> - Returns query results based on user input query and query options</li>
+                <li><code>type SmartSort []Reference</code> - Not a function, but the sort interface used to smartly rank results</li>
+            </div>
             <p class="lead">
               Visit the GitHub page <a target="_blank" rel="noopener noreferrer" href="https://github.com/flapjack103/go-search">github.com/flapjack103/go-search</a> to view the code directly and download the project.
             </p>
@@ -232,6 +248,9 @@
               <pre><code>$ go get github.com/flapjack103/go-search<br>$ ./go-search &lt;project-directory&gt;
               </code></pre>
             </div>
+            <p class="lead">
+              You can also checkout the slide presentation on the project <a target="_blank" rel="noopener noreferrer" href="https://docs.google.com/presentation/d/1fayQFkSKyZbhWpKVYUHqekhDMagifCMajJ1Nzz_zzkE/edit?usp=sharing"> here </a>.
+            </p>
           </div>
         </main>
       </div>
