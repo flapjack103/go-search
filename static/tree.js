@@ -29,7 +29,7 @@ treeChart.prototype.drawChart = function() {
  *     and central point location.
  */
 treeChart.prototype.getTreeConfig = function() {
-  var treeConfig = {'margin': {'top': 10, 'right': 5, 'bottom': 0, 'left': 30}}
+  var treeConfig = {'margin': {'top': -180, 'right': 5, 'bottom': 0, 'left': 60}}
   // This will be the maximum dimensions
   treeConfig.chartWidth = (960 - treeConfig.margin.right -
       treeConfig.margin.left);
@@ -39,7 +39,7 @@ treeChart.prototype.getTreeConfig = function() {
   treeConfig.centralWidth = treeConfig.chartWidth / 2;
   treeConfig.linkLength = 100;
   treeConfig.duration = 200;
-  treeConfig.elemID = '#myChart';
+  treeConfig.elemID = '#call-tree';
   return treeConfig;
 };
 
@@ -65,8 +65,7 @@ treeChart.prototype.graphTree = function(config) {
       .append('svg')
       .attr('width',
             config.chartWidth + config.margin.right + config.margin.left)
-      .attr('height',
-	        config.chartHeight + config.margin.top + config.margin.bottom)
+      .attr('height', 700)
       .on('mousedown', disableRightClick)
       .call(zoom)
       .on('dblclick.zoom', null);
@@ -102,7 +101,7 @@ treeChart.prototype.graphTree = function(config) {
     // Reset tree layout based on direction, since the downward chart has
 	// way too many nodes to fit in the screen, while we want a symmetric
 	// view for upward chart.
-    var nodeSpace = 50;
+    var nodeSpace = 60;
     var tree = d3.layout.tree().sort(sortByDate).nodeSize([nodeSpace, 0]);
     if (forUpward) {
 	  tree.size([config.chartWidth, config.chartHeight]);
@@ -175,7 +174,7 @@ treeChart.prototype.graphTree = function(config) {
         .attr('transform', function(d) {
           return 'translate(' + d.x + ',' + d.y + ')'; });
     nodeUpdate.select('circle')
-        .attr('r', 6)
+        .attr('r', 8)
         .style('fill', function(d) {
           if (d._children || d.children) {return nodeColor;}
         })

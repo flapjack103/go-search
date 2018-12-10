@@ -1,18 +1,28 @@
 package main
 
-import "sort"
+import (
+	"sort"
+)
 
+// SummaryTopResultsLimit is the number of results to return for each
+// 'top' list category
+const SummaryTopResultsLimit = 10
+
+// WordCount is the type returned for the 'top' lists in the summary
 type WordCount struct {
 	Word  string `json:"word"`
 	Count int    `json:"count"`
 }
 
+// ByCounts sorts WordCounts by their Count field
 type ByCounts []*WordCount
 
 func (c ByCounts) Len() int           { return len(c) }
 func (c ByCounts) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
 func (c ByCounts) Less(i, j int) bool { return c[i].Count < c[j].Count }
 
+// Summary is the type returned for the code project summary. It encapsulates
+// interesting information about the code as a whole and also 'top' lists
 type Summary struct {
 	idx               *Index
 	FileCount         int          `json:"file_count"`
@@ -24,11 +34,9 @@ type Summary struct {
 	MCFunctionNames   []*WordCount `json:"most_common_funcs"`
 	AvgFunctionLength int          `json:"avg_func_len"`
 	LargestFunction   *Function    `json:"largest_func"`
-	AvgCallDepth      int          `json:"avg_call_depth"`
-	MaxCallDepth      int          `json:"max_call_depth"`
 }
 
-// Summary of stats from the index
+// Summary generates code stats and information from the Index
 func (x *Index) Summary() *Summary {
 	var (
 		wordCounts    []*WordCount
@@ -69,19 +77,27 @@ func (x *Index) Summary() *Summary {
 	sort.Sort(sort.Reverse(ByCounts(varCounts)))
 	sort.Sort(sort.Reverse(ByCounts(funcCounts)))
 
-	if len(wordCounts) > 10 {
-		wordCounts = wordCounts[:10]
+	// truncate results for 'top' list
+	if len(wordCounts) > SummaryTopResultsLimit {
+		wordCounts = wordCounts[:SummaryTopResultsLimit]
 	}
-	if len(varCounts) > 10 {
-		varCounts = varCounts[:10]
+	if len(varCounts) > SummaryTopResultsLimit {
+		varCounts = varCounts[:SummaryTopResultsLimit]
 	}
-	if len(funcCounts) > 10 {
-		funcCounts = funcCounts[:10]
+	if len(funcCounts) > SummaryTopResultsLimit {
+		funcCounts = funcCounts[:SummaryTopResultsLimit]
+	}
+
+	// annoying, but these need to be relative to root
+	fileCount := len(x.fileMgr.files)
+	relFiles := make([]string, 0, fileCount)
+	for _, f := range x.fileMgr.files {
+		relFiles = append(relFiles, x.fileMgr.Rel(f))
 	}
 
 	return &Summary{
-		FileCount:         len(x.files),
-		Files:             x.files,
+		FileCount:         fileCount,
+		Files:             relFiles,
 		UniqueWordCount:   len(x.references),
 		FunctionCount:     len(x.functions),
 		MCWords:           wordCounts,

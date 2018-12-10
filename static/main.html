@@ -3,16 +3,19 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <title>Dashboard Template for Bootstrap</title>
+    <meta name="description" content="Tool for code discovery">
+    <meta name="author" content="Alexandra Bueno">
+    <title>Go Search!</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
     <!-- Custom styles for this template -->
     <link href="dashboard.css" rel="stylesheet">
     </head>
   <body>
     <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Go Search!</a>
+      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">
+        <img src="go-search-logo.svg" width="30" height="30" class="d-inline-block align-top" alt="">
+        Go Search!
+      </a>
       <input id="search-bar" class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search">
     </nav>
 
@@ -23,32 +26,32 @@
             <ul class="nav flex-column">
               <li id="sel-summary" class="nav-item">
                 <a class="nav-link active" href="#">
-                  <span data-feather="home"></span>
+                  <span data-feather="clipboard"></span>
                   Summary <span class="sr-only">(current)</span>
                 </a>
               </li>
               <li id="sel-call-tree" class="nav-item">
                 <a class="nav-link" href="#">
-                  <span data-feather="file"></span>
+                  <span data-feather="share-2"></span>
                   Call Tree
                 </a>
               </li>
-              <li id="sel-variables" class="nav-item">
+              <li id="sel-search" class="nav-item">
                 <a class="nav-link" href="#">
-                  <span data-feather="file"></span>
-                  Variables
+                  <span data-feather="search"></span>
+                  Search
                 </a>
               </li>
-              <li id="sel-functions" class="nav-item">
-                <a class="nav-link" href="#">
-                  <span data-feather="shopping-cart"></span>
-                  Functions
-                </a>
-              </li>
-              <li id="sel-files" class="nav-item">
-                <a class="nav-link" href="#">
-                  <span data-feather="users"></span>
+              <li class="nav-item">
+                <a class="nav-link" target="_blank" rel="noopener noreferrer" href="https://github.com/flapjack103/go-search">
+                  <span data-feather="file-text"></span>
                   Files
+                </a>
+              </li>
+              <li id="sel-about" class="nav-item">
+                <a class="nav-link" href="#">
+                  <span data-feather="info"></span>
+                  About
                 </a>
               </li>
             </ul>
@@ -57,28 +60,178 @@
 
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-            <h1 class="h2">Dashboard</h1>
+            <h1 id="page-title" class="mb-1">Summary</h1>
           </div>
 
-          <div id="myChart" class="my-4 w-100" width="900" height="380">
-          </div>
+          <div id="call-tree" class="my-4 w-100 hidden"></div>
 
-          <h2 id="table-header">Results</h2>
-          <div class="table-responsive">
-            <table id="results-table" class="table table-striped table-sm">
-              <tr>
-                <th>Word</th>
-                <th>Type</th>
-                <th>Location</th>
-                <th>Is Declaration</th>
-                <th>Scope</th>
-              </tr>
-              <tbody id="results-table-body">
+          <div id="summary" >
+            <div class="card-columns">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">File Count</h5>
+                  <h6 class="card-subtitle mb-2 text-muted">Number of .go files in the project</h6>
+                  <p id="file-count" class="card-text"></p>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Unique Word Count</h5>
+                  <h6 class="card-subtitle mb-2 text-muted">Unique words for variable names and function names</h6>
+                  <p id="word-count" class="card-text"></p>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Function Count</h5>
+                  <h6 class="card-subtitle mb-2 text-muted">Number of function definitions</h6>
+                  <p id="func-count" class="card-text"></p>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Average Function Length</h5>
+                  <h6 class="card-subtitle mb-2 text-muted">Average number of lines in a function definition block</h6>
+                  <p id="avg-fn-len" class="card-text"></p>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Largest Function</h5>
+                  <h6 class="card-subtitle mb-2 text-muted">Function definition with the most number of lines</h6>
+                  <p id="largest-fn-name" class="card-text"></p>
+                  <p id="largest-fn-size" class="card-text"></p>
+                </div>
+              </div>
+            </div>
+            <h4>Most Common Words</h4>
+            <table class="table table-hover">
+              <thead class="thead-dark">
                 <tr>
-                  <td>Type a query in the search bar to search</td>
+                  <th scope="col">#</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Count</th>
                 </tr>
+              </thead>
+              <tbody id="mc-words-table">
               </tbody>
             </table>
+            <h4>Most Common Variables</h4>
+            <table class="table table-hover">
+              <thead class="thead-dark">
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Count</th>
+                </tr>
+              </thead>
+              <tbody id="mc-vars-table">
+              </tbody>
+            </table>
+            <h4>Most Common Functions</h4>
+            <table class="table table-hover">
+              <thead class="thead-dark">
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Count</th>
+                </tr>
+              </thead>
+              <tbody id="mc-fns-table">
+              </tbody>
+            </table>
+          </div>
+
+          <div id="search">
+            <form>
+              <div class="row">
+                <div class="col">
+                  <div class="form-group">
+                    <label for="filter-type">Type</label>
+                    <select class="form-control" id="filter-type">
+                      <option>All</option>
+                      <option>Functions</option>
+                      <option>Structs</option>
+                      <option>Variables</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="form-group">
+                    <label for="filter-file">File</label>
+                    <select class="form-control" id="filter-file">
+                      <option>All</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="form-group">
+                    <label for="filter-limit">Limit</label>
+                    <select class="form-control" id="filter-limit">
+                      <option>10</option>
+                      <option>25</option>
+                      <option>50</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </form>
+            <div id="code-preview" class="my-4 w-100 hidden" width="900" height="380">
+              <h6 class="mb-2 text-muted">Code Preview</h6>
+              <div id="code-block" class="card"></div>
+            </div>
+            <div class="table-responsive">
+              <table id="results-table" class="table table-hover table-sm">
+                <thead class="thead-dark">
+                  <tr>
+                    <th>Word</th>
+                    <th>Type</th>
+                    <th>Location</th>
+                    <th>Is Declaration</th>
+                    <th>Scope</th>
+                  </tr>
+                </thead>
+                <tbody id="results-table-body">
+                  <tr>
+                    <td>Type a query in the search bar to search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="about" class="container">
+            <figure class="figure">
+              <img src="go-search-logo.svg" class="figure-img img-fluid rounded" alt="A generic square placeholder image with rounded corners in a figure.">
+              <figcaption class="figure-caption">Image Credit: www.gopherguides.com</figcaption>
+            </figure>
+            <p class="lead">
+              Go Search! is a tool designed for exposing code structure and other information about Go projects. Its goal is to provide an easy interface for surfacing interesting facts and for enabling exploration. There are three main components to the tool, described in more detail below.
+            </p>
+            <div class="bs-callout bs-callout-primary">
+              <h4>Summary</h4>
+                The tool provides a quick summary about the code base including information about unique words in the code base (including functions, variables and structs) as well as information about the functions themselves such a largest function and average function definition block size. A list of the most common words/functions/variable is also available for insight into common naming schemes.
+            </div>
+            <div class="bs-callout bs-callout-success">
+              <h4>Call Tree</h4>
+                The call tree feature exposes the function calls in the program as a tree, where each node is a function call and child node is a function called within the parent function. This gives a visual representation of the callstack and the flow of the program. Each node also indicates where the function invoked is defined in within the program. External functions are defined outside the scope of the project.
+            </div>
+            <div class="bs-callout bs-callout-warning">
+              <h4>Search</h4>
+                The search bar is another way of interacting with the code base.
+            </div>
+
+            <h4> The Code </h4>
+            <p class="lead">
+              Unsurprisingly, Go Search! is written in Go. The default code project for this program is the project itself so you can see how the program which powers this tool is structured.
+            </p>
+            <p class="lead">
+              Visit the GitHub page <a target="_blank" rel="noopener noreferrer" href="https://github.com/flapjack103/go-search">github.com/flapjack103/go-search</a> to view the code directly and download the project.
+            </p>
+            <div class="bs-callout">
+              <pre><code>$ go get github.com/flapjack103/go-search<br>$ ./go-search &lt;project-directory&gt;
+              </code></pre>
+            </div>
           </div>
         </main>
       </div>
@@ -99,56 +252,219 @@
       feather.replace()
     </script>
 
-    <!-- Graphs -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
+    <!-- Custom Code -->
     <script>
 
-    $( document ).ready(function() {
-        console.log( "ready!" );
-        var functionCallChart = new treeChart(d3);
-        functionCallChart.drawChart();
-    });
+    var sections = ["summary", "call-tree", "search", "about"];
+    var sectionHeaders = ["Summary", "Call Tree", "Search", "About"];
+    function show(section) {
+      for (var i = 0; i < sections.length; i++) {
+        s = sections[i];
+        if (s == section) {
+          $("#"+section).removeClass("hidden");
+          $("#sel-"+s+" a").addClass("active");
+          $("#page-title").text(sectionHeaders[i]);
+          continue
+        }
+        if (!$("#"+s).hasClass("hidden")) {
+          $("#"+s).addClass("hidden");
+          $("#sel-"+s+" a").removeClass("active");
+        }
+      }
+    }
 
-    $("#search-bar").on('input', function() {
+    function getSearchFilters() {
+      return {
+        "file": $("#filter-file :selected").text(),
+        "type": $("#filter-type :selected").text(),
+        "limit": $("#filter-limit :selected").text()
+      }
+    }
+
+    function search() {
       var query = $("#search-bar").val();
       var url = '/search?query=' + query;
-      jQuery.get(url).done(function( data ) {
-        console.log(data);
+
+      // apply filters
+      var filters = getSearchFilters();
+      for (f in filters) {
+        url += "&" + f + "=" + filters[f];
+      }
+
+      jQuery.get(url).done(function(data) {
         if (data == null) {
           return
         }
         data = jQuery.parseJSON(data);
+        if (data["error"]) {
+          console.log(data);
+          return
+        }
+
         var tbl_body = "";
-        var odd_even = false;
         $.each(data, function() {
             var tbl_row = "";
             $.each(this, function(k , v) {
                 tbl_row += "<td>"+v+"</td>";
             })
-            tbl_body += "<tr class=\""+( odd_even ? "odd" : "even")+"\">"+tbl_row+"</tr>";
-            odd_even = !odd_even;
+            tbl_body += "<tr>"+tbl_row+"</tr>";
         })
         $("#results-table-body").html(tbl_body);
       });
-    });
+    }
 
-    $( "#sel-functions" ).click(function() {
-      console.log( "functions handler clicked" );
-      jQuery.get('/functions.json').done(function( data ) {
-        console.log(data);
+    $("#sel-summary").click(function() {
+      show("summary");
+      var url = '/summary.json';
+      jQuery.get(url).done(function( data ) {
+        if (data == null) {
+          return
+        }
+        data = jQuery.parseJSON(data);
+        if (data["error"]) {
+          console.log(data);
+          return
+        }
+
+        $("#file-count").html(data["file_count"]);
+        $("#func-count").html(data["func_count"]);
+        $("#word-count").html(data["uniq_word_count"]);
+        $("#avg-fn-len").html(data["avg_func_len"]);
+
+        var file_filters = "<option>All</option>";
+        for (i in data["files"]) {
+          var f = data["files"][i];
+          file_filters += "<option>"+f+"</option>";
+        }
+        $("#filter-file").html(file_filters)
+
+        fn = data["largest_func"];
+        $("#largest-fn-name").html(fn["name"] + " (" + fn["location"]["file"] + ":" + fn["location"]["line"] + ")");
+        $("#largest-fn-size").html("Line count: " + fn["size"]);
+
+        var tbl_body = "";
+        var i = 1;
+        $.each(data["most_common_words"], function() {
+            var tbl_row = "<td>"+i+"</td>";
+            i++
+            $.each(this, function(k , v) {
+                tbl_row += "<td>"+v+"</td>";
+            })
+            tbl_body += "<tr>"+tbl_row+"</tr>";
+        })
+        $("#mc-words-table").html(tbl_body);
+
+        var tbl_body = "";
+        var i = 1;
+        $.each(data["most_common_vars"], function() {
+            var tbl_row = "<td>"+i+"</td>";
+            i++
+            $.each(this, function(k , v) {
+                tbl_row += "<td>"+v+"</td>";
+            })
+            tbl_body += "<tr>"+tbl_row+"</tr>";
+        })
+        $("#mc-vars-table").html(tbl_body);
+
+        var tbl_body = "";
+        var i = 1;
+        $.each(data["most_common_funcs"], function() {
+            var tbl_row = "<td>"+i+"</td>";
+            i++
+            $.each(this, function(k , v) {
+                tbl_row += "<td>"+v+"</td>";
+            })
+            tbl_body += "<tr>"+tbl_row+"</tr>";
+        })
+        $("#mc-fns-table").html(tbl_body);
       });
     });
 
-    $( "#sel-variables" ).click(function() {
-      console.log( "variables handler clicked" );
+    // make summary tables clickable
+    $("#mc-words-table").on('click', 'tr', function() {
+      var query = $(this).children()[1].textContent;
+      $("#search-bar").val(query);
+      show("search");
+      search();
     });
 
-    $( "#sel-files" ).click(function() {
-      console.log( "files handler clicked" );
+    $("#mc-vars-table").on('click', 'tr', function() {
+      var query = $(this).children()[1].textContent;
+      $("#search-bar").val(query);
+      show("search");
+      search();
     });
 
-    $( "#sel-graph" ).click(function() {
-      console.log( "graph handler clicked" );
+    $("#mc-fns-table").on('click', 'tr', function() {
+      var query = $(this).children()[1].textContent;
+      $("#search-bar").val(query);
+      show("search");
+      search();
+    });
+
+    $("#sel-search").click(function() {
+      show("search");
+    });
+
+    $( "#sel-call-tree" ).click(function() {
+      show("call-tree");
+    });
+
+    $( "#sel-about" ).click(function() {
+      show("about");
+    });
+
+    $("#search-bar").on('input', function() {
+      show("search");
+      if (!$("#code-preview").hasClass("hidden")) {
+        $("#code-preview").addClass("hidden");
+      }
+      search();
+    });
+
+    $("#results-table-body").on('click', 'tr', function() {
+      var loc = $(this).children()[2].textContent;
+      if (loc == "external") {
+        return
+      }
+      var parts = loc.split(":");
+      if (parts.length < 2) {
+        return
+      }
+
+      var query = "file=" + parts[0] + "&line=" + parts[1];
+      var url = '/preview?' + query;
+      jQuery.get(url).done(function( data ) {
+        if (data == null) {
+          return
+        }
+        data = jQuery.parseJSON(data);
+        if (data["error"]) {
+          console.log(data);
+          return
+        }
+        var preview = "<pre><code>" + data["code"] + "</pre></code>"
+        $("#code-block").html(preview);
+        $("#code-preview").removeClass("hidden");
+      });
+    });
+
+    // update results when search filters change
+    $("#filter-file").on("change", function() {
+      search();
+    });
+    $("#filter-type").on("change", function() {
+      search();
+    });
+    $("#filter-limit").on("change", function() {
+      search();
+    });
+
+    $( document ).ready(function() {
+        console.log("ready!");
+        var functionCallChart = new treeChart(d3);
+        functionCallChart.drawChart();
+        $("#sel-summary").trigger("click");
     });
 
     </script>

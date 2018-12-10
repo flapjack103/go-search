@@ -1,59 +1,64 @@
 package main
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"log"
 )
 
-// Index keeps file information for fast lookup
+// Index keeps project information for fast lookup.
 type Index struct {
-	fset       *token.FileSet
-	files      []string
+	fset    *token.FileSet
+	fileMgr *FileManager
+	// mapping of word to different types of interest
 	references map[string][]Reference
 	functions  map[string][]*Function
 	structs    map[string][]*Struct
 }
 
-func BuildIndex(files []string) *Index {
+// BuildIndex constructs the Index by walking the files and parsing their ASTs
+func BuildIndex(fm *FileManager) *Index {
 	fset := token.NewFileSet()
 	idx := &Index{
 		fset:       fset,
+		fileMgr:    fm,
 		references: make(map[string][]Reference),
 		functions:  make(map[string][]*Function),
 		structs:    make(map[string][]*Struct),
 	}
-	idx.files = files
 
-	for _, arg := range files {
+	for _, arg := range idx.fileMgr.files {
 		f, err := parser.ParseFile(fset, arg, nil, parser.AllErrors)
 		if err != nil {
-			log.Printf("could not parse %s: %v", arg, err)
+			fmt.Printf("could not parse %s: %v\n", arg, err)
 			continue
 		}
 		ast.Walk(idx, f)
 	}
-	idx.createFuncDeps()
+
+	idx.scopeReferences()
+
 	return idx
 }
 
-func (x *Index) createFuncDeps() {
+// XXX: this function is terrible but it gets the job done
+// determines the scopes for the different items parsed from the files
+// ex. determine that variable 'idx' is referenced within fn 'main'
+func (x *Index) scopeReferences() {
 	for _, refs := range x.references {
 		for _, ref := range refs {
-			fnCall, ok := ref.(*Function)
-			if !ok || fnCall.IsDecl {
-				continue
-			}
-			loc := fnCall.GetLocation()
+			loc := ref.GetLocation()
 			for _, fns := range x.functions {
 				for _, fn := range fns {
 					if !fn.Wraps(loc) {
 						// loc not within func block
 						continue
 					}
-					loc.Within = fn
-					fn.Calls = append(fn.Calls, fnCall.Name)
+					loc.Within = fn.Info()
+					if fnCall, ok := ref.(*Function); ok {
+						fn.Calls = append(fn.Calls, fnCall.Name)
+					}
 				}
 			}
 		}
@@ -61,11 +66,15 @@ func (x *Index) createFuncDeps() {
 }
 
 func (x *Index) addFunction(name string, body *ast.BlockStmt, recv string) {
+	if x.fset == nil || body == nil {
+		return
+	}
 	posStart := x.fset.Position(body.Lbrace)
 	posEnd := x.fset.Position(body.Rbrace)
+	relPath := x.fileMgr.Rel(posStart.Filename)
 	f := &Function{
 		Location: &Location{
-			File: posStart.Filename,
+			File: relPath,
 			Line: posStart.Line,
 		},
 		Name:     name,
@@ -80,9 +89,10 @@ func (x *Index) addFunction(name string, body *ast.BlockStmt, recv string) {
 
 func (x *Index) addFunctionCall(name string, n ast.Node, recv string) {
 	pos := x.fset.Position(n.Pos())
+	relPath := x.fileMgr.Rel(pos.Filename)
 	f := &Function{
 		Location: &Location{
-			File: pos.Filename,
+			File: relPath,
 			Line: pos.Line,
 		},
 		Name:     name,
@@ -93,9 +103,10 @@ func (x *Index) addFunctionCall(name string, n ast.Node, recv string) {
 
 func (x *Index) addVariable(name string, n ast.Node, isDecl bool) {
 	pos := x.fset.Position(n.Pos())
+	relPath := x.fileMgr.Rel(pos.Filename)
 	v := &Variable{
 		Location: &Location{
-			File: pos.Filename,
+			File: relPath,
 			Line: pos.Line,
 		},
 		Name:   name,
@@ -107,11 +118,11 @@ func (x *Index) addVariable(name string, n ast.Node, isDecl bool) {
 
 func (x *Index) addStruct(name string, n ast.Node) {
 	pos := x.fset.Position(n.Pos())
-
+	relPath := x.fileMgr.Rel(pos.Filename)
 	s := &Struct{
 		Name: name,
 		Location: &Location{
-			File: pos.Filename,
+			File: relPath,
 			Line: pos.Line,
 		},
 	}
@@ -139,6 +150,8 @@ func (x *Index) Functions() Functions {
 }
 
 // Visit defines what we do when we visit a node in the AST
+// XXX: AST parsing is not complete as their are certain expressions that are
+// not handled. This handles more basic cases but could be more comprehensive.
 func (x *Index) Visit(n ast.Node) ast.Visitor {
 	if n == nil {
 		return nil
@@ -147,10 +160,6 @@ func (x *Index) Visit(n ast.Node) ast.Visitor {
 	switch d := n.(type) {
 	case *ast.IfStmt:
 		x.local(d.Cond)
-	case *ast.StructType:
-		// if len(d.Fields.List) > 0 {
-		// 	spew.Dump(d.Fields.List[0])
-		// }
 	case *ast.AssignStmt:
 		if d.Tok != token.DEFINE {
 			break
@@ -233,7 +242,7 @@ func (x *Index) localList(fs []*ast.Field, t token.Token) {
 }
 
 func parseFuncReceiver(recv *ast.FieldList) string {
-	if recv == nil {
+	if recv == nil || len(recv.List) == 0 {
 		return ""
 	}
 
