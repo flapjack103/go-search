@@ -4,28 +4,34 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
 
 // DefaultServerPort is the port the http server listens on
 // XXX: allow this to be overridden
-const DefaultServerPort = 8080
+const DefaultServerPort = "8080"
 
 // Server is the http server for handling queries and serving the static
 // files for the website
 type Server struct {
 	mux     *http.ServeMux
-	port    int
+	port    string
 	querier *Querier
 	fileMgr *FileManager
 }
 
 // NewServer inits an http server and attaches the handlers.
 func NewServer(q *Querier, m *FileManager) *Server {
+	port := DefaultServerPort
+	if envPort, ok := os.LookupEnv("PORT"); ok {
+		port = envPort
+	}
+
 	s := &Server{
 		mux:     http.NewServeMux(),
-		port:    DefaultServerPort,
+		port:    port,
 		querier: q,
 		fileMgr: m,
 	}
@@ -37,8 +43,8 @@ func NewServer(q *Querier, m *FileManager) *Server {
 
 // Listen starts the server listening for requests.
 func (s *Server) Listen() error {
-	fmt.Printf("Listening on port %d...\n", s.port)
-	return http.ListenAndServe(fmt.Sprintf(":%d", s.port), s.mux)
+	fmt.Printf("Listening on port %s...\n", s.port)
+	return http.ListenAndServe(fmt.Sprintf(":%s", s.port), s.mux)
 }
 
 func (s *Server) initHandlers() {
