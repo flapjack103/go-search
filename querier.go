@@ -43,7 +43,7 @@ type Querier struct {
 	trie *Trie
 }
 
-// NewQuerier returns a Querier object
+// NewQuerier returns a Querier object initialized with an Index and a Trie
 func NewQuerier(idx *Index, trie *Trie) *Querier {
 	return &Querier{
 		idx,
@@ -51,7 +51,7 @@ func NewQuerier(idx *Index, trie *Trie) *Querier {
 	}
 }
 
-// Query runs a query for the input and returns a list of results
+// Query runs a query for the input and returns a list of References
 func (q *Querier) Query(input string, opts *QueryOptions) References {
 	n, ok := q.trie.Find(input)
 	if !ok {
@@ -62,7 +62,7 @@ func (q *Querier) Query(input string, opts *QueryOptions) References {
 	words := n.Prefixes()
 	for _, w := range words {
 		w = input + w
-		refs, ok := q.idx.References(w)
+		refs, ok := q.idx.ReferencesByWord(w)
 		if !ok {
 			continue
 		}
@@ -89,6 +89,8 @@ func (q *Querier) Query(input string, opts *QueryOptions) References {
 	return resultsFiltered
 }
 
+// returns true if the reference is a match on the filter and false otherwise.
+// References that do not match are filtered out.
 func isMatch(ref Reference, opts *QueryOptions) bool {
 	if opts.wtype != ResultsAll {
 		// filter on type

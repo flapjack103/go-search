@@ -14,7 +14,7 @@ import (
 const DefaultServerPort = "8080"
 
 // Server is the http server for handling queries and serving the static
-// files for the website
+// files for the website.
 type Server struct {
 	mux     *http.ServeMux
 	port    string
@@ -67,7 +67,7 @@ func (s *Server) summaryHandler(w http.ResponseWriter, r *http.Request) {
 	data, err := json.Marshal(summary)
 	if err != nil {
 		fmt.Printf("Error creating summary: %s\n", err)
-		fmt.Fprint(w, fmt.Sprintf("{error:%s}", err))
+		fmt.Fprint(w, "{\"error\": \"error generating summary\"}")
 		return
 	}
 	fmt.Fprint(w, string(data))
@@ -114,8 +114,8 @@ func (s *Server) previewHandler(w http.ResponseWriter, r *http.Request) {
 
 	data, err := json.Marshal(preview)
 	if err != nil {
-		fmt.Printf("Error running search: %s\n", err)
-		fmt.Fprint(w, fmt.Sprintf("{error:%s}", err))
+		fmt.Printf("Error marshalling preview response: %s\n", err)
+		fmt.Fprint(w, "{\"error\": \"error generating preview\"}")
 		return
 	}
 	fmt.Fprint(w, string(data))

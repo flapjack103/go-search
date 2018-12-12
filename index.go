@@ -7,7 +7,8 @@ import (
 	"go/token"
 )
 
-// Index keeps project information for fast lookup.
+// Index stores file information and lookup tables that map words to their types
+// and their references within the project.
 type Index struct {
 	fset    *token.FileSet
 	fileMgr *FileManager
@@ -42,27 +43,20 @@ func BuildIndex(fm *FileManager) *Index {
 	return idx
 }
 
-// XXX: this function is terrible but it gets the job done
-// determines the scopes for the different items parsed from the files
-// ex. determine that variable 'idx' is referenced within fn 'main'
-func (x *Index) scopeReferences() {
-	for _, refs := range x.references {
-		for _, ref := range refs {
-			loc := ref.GetLocation()
-			for _, fns := range x.functions {
-				for _, fn := range fns {
-					if !fn.Wraps(loc) {
-						// loc not within func block
-						continue
-					}
-					loc.Within = fn.Info()
-					if fnCall, ok := ref.(*Function); ok {
-						fn.Calls = append(fn.Calls, fnCall.Name)
-					}
-				}
-			}
-		}
-	}
+// ReferencesByWord returns all references to the given word. Returns true if the word
+// was found and false otherwise.
+func (x *Index) ReferencesByWord(word string) ([]Reference, bool) {
+	refs, ok := x.references[word]
+	return refs, ok
+}
+
+// Functions returns a list of all Function declarations
+func (x *Index) Functions() Functions {
+	return x.functions
+}
+
+func (x *Index) addReference(word string, ref Reference) {
+	x.references[word] = append(x.references[word], ref)
 }
 
 func (x *Index) addFunction(name string, body *ast.BlockStmt, recv string) {
@@ -131,22 +125,27 @@ func (x *Index) addStruct(name string, n ast.Node) {
 	x.addReference(name, s)
 }
 
-// addReference
-func (x *Index) addReference(word string, ref Reference) {
-	x.references[word] = append(x.references[word], ref)
-
-}
-
-// References returns all references to the given word. Returns true if the word
-// was found and false otherwise.
-func (x *Index) References(word string) ([]Reference, bool) {
-	refs, ok := x.references[word]
-	return refs, ok
-}
-
-// Functions returns a list of all Function declarations
-func (x *Index) Functions() Functions {
-	return x.functions
+// XXX: this function is terrible but it gets the job done
+// determines the scopes for the different items parsed from the files
+// ex. determine that variable 'idx' is referenced within fn 'main'
+func (x *Index) scopeReferences() {
+	for _, refs := range x.references {
+		for _, ref := range refs {
+			loc := ref.GetLocation()
+			for _, fns := range x.functions {
+				for _, fn := range fns {
+					if !fn.Wraps(loc) {
+						// loc not within func block
+						continue
+					}
+					loc.Within = fn.Info()
+					if fnCall, ok := ref.(*Function); ok {
+						fn.Calls = append(fn.Calls, fnCall.Name)
+					}
+				}
+			}
+		}
+	}
 }
 
 // Visit defines what we do when we visit a node in the AST
